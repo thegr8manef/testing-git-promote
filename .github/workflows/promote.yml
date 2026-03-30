@@ -22,11 +22,13 @@ jobs:
       - name: Push to GitLab
         run: |
           git remote remove gitlab || true
-
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/jedidimanef-group/testing-gitlab-pormote.git
 
-          # 🔥 This will FAIL if token is wrong (good for debug)
-          git ls-remote gitlab
+          # Fetch GitLab repo
+          git fetch gitlab main
 
-          # Push mirror
+          # Merge histories (IMPORTANT)
+          git merge gitlab/main --allow-unrelated-histories -m "ci: sync github -> gitlab"
+
+          # Push
           git push gitlab main
