@@ -1,4 +1,4 @@
-name: Simple Promote to GitLab
+name: Promote to GitLab
 
 on:
   push:
@@ -9,22 +9,24 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Configure Git
+      - name: Setup Git
         run: |
-          git config user.name "ci-bot"
-          git config user.email "ci@bot.com"
+          git config user.name "thegr8manef"
+          git config user.email "jedidimanef@gmail.com"
 
       - name: Push to GitLab
         run: |
+          git remote remove gitlab || true
+
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/jedidimanef-group/testing-gitlab-pormote.git
 
-          # Debug (optional)
-          git remote -v
+          # 🔥 This will FAIL if token is wrong (good for debug)
+          git ls-remote gitlab
 
-          # Push
+          # Push mirror
           git push gitlab main --force
