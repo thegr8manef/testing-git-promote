@@ -31,4 +31,4 @@ jobs:
           git merge gitlab/main --allow-unrelated-histories -m "ci: sync github -> gitlab"
 
           # Push
-          git push gitlab main
+          git push -f gitlab main
