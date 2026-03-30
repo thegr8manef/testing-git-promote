@@ -6,62 +6,62 @@ on:
 
 jobs:
   # ─── Android staging ── tn.attijariup.plus ─────────────────
-  android:
-    name: Android staging
-    runs-on: ubuntu-latest
+  # android:
+  #   name: Android staging
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  #   steps:
+  #     - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: yarn
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 20
+  #         cache: yarn
 
-      - name: Install JS dependencies
-        run: yarn install --frozen-lockfile
+  #     - name: Install JS dependencies
+  #       run: yarn install --frozen-lockfile
 
-      # - name: Inject .env.development
-      #   run: cp .env.development .env
+  # - name: Inject .env.development
+  #   run: cp .env.development .env
 
-      # - name: Write firebase/google-services.json (staging)
-      #   run: |
-      #     mkdir -p firebase
-      #     echo '${{ secrets.STAGING_GOOGLE_SERVICES_JSON }}' > firebase/google-services.json
+  # - name: Write firebase/google-services.json (staging)
+  #   run: |
+  #     mkdir -p firebase
+  #     echo '${{ secrets.STAGING_GOOGLE_SERVICES_JSON }}' > firebase/google-services.json
 
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
+  # - uses: actions/setup-java@v4
+  #   with:
+  #     distribution: temurin
+  #     java-version: 17
 
-      # - name: Decode keystore
-      #   run: |
-      #     echo "${{ secrets.STAGING_KEYSTORE_B64 }}" | base64 -d > android/app/AttijariUP-release-key.jks
+  # - name: Decode keystore
+  #   run: |
+  #     echo "${{ secrets.STAGING_KEYSTORE_B64 }}" | base64 -d > android/app/AttijariUP-release-key.jks
 
-      # - name: Inject signing into gradle.properties
-      #   run: |
-      #     cat >> android/gradle.properties << EOF
-      #     MYAPP_UPLOAD_STORE_FILE=AttijariUP-release-key.jks
-      #     MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.STAGING_STORE_PASSWORD }}
-      #     MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.STAGING_KEY_ALIAS }}
-      #     MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.STAGING_KEY_PASSWORD }}
-      #     EOF
+  # - name: Inject signing into gradle.properties
+  #   run: |
+  #     cat >> android/gradle.properties << EOF
+  #     MYAPP_UPLOAD_STORE_FILE=AttijariUP-release-key.jks
+  #     MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.STAGING_STORE_PASSWORD }}
+  #     MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.STAGING_KEY_ALIAS }}
+  #     MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.STAGING_KEY_PASSWORD }}
+  #     EOF
 
-      # - name: Expo prebuild (Android)
-      #   run: npx expo prebuild --platform android --clean
+  # - name: Expo prebuild (Android)
+  #   run: npx expo prebuild --platform android --clean
 
-      # - name: Build previewRelease APK
-      #   working-directory: android
-      #   run: ./gradlew assemblePreviewRelease
+  # - name: Build previewRelease APK
+  #   working-directory: android
+  #   run: ./gradlew assemblePreviewRelease
 
-      # - name: Distribute to Firebase App Distribution
-      #   uses: wzieba/Firebase-Distribution-Github-Action@v1
-      #   with:
-      #     appId: ${{ secrets.FIREBASE_STAGING_ANDROID_APP_ID }}
-      #     serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS }}
-      #     file: android/app/build/outputs/apk/previewRelease/app-previewRelease.apk
-      #     groups: qa-team
-      #     releaseNotes: "Android staging (tn.attijariup.plus) · ${{ github.sha }}"
+  # - name: Distribute to Firebase App Distribution
+  #   uses: wzieba/Firebase-Distribution-Github-Action@v1
+  #   with:
+  #     appId: ${{ secrets.FIREBASE_STAGING_ANDROID_APP_ID }}
+  #     serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS }}
+  #     file: android/app/build/outputs/apk/previewRelease/app-previewRelease.apk
+  #     groups: qa-team
+  #     releaseNotes: "Android staging (tn.attijariup.plus) · ${{ github.sha }}"
 
   # ─── iOS staging ── tn.attijariup.plus ─────────────────────
   # ios:
@@ -144,7 +144,7 @@ jobs:
   promote:
     name: Promote to GitLab (prod)
     runs-on: ubuntu-latest
-    needs: [android, ios]
+    # needs: [android, ios]
 
     steps:
       - uses: actions/checkout@v4

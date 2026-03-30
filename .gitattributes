@@ -1,0 +1,5 @@
+# These files exist independently in each repo.
+# When GitHub pushes to GitLab, GitLab keeps its own version.
+app.json merge=ours
+firebase/google-services.json merge=ours
+firebase/GoogleService-Info.plist merge=ours
