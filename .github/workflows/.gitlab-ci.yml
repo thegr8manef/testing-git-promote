@@ -1,0 +1,117 @@
+stages:
+  - build
+  - release
+
+# ─── Android prod ── tn.attijari.android.prod ──────────────
+build-android-prod:
+  stage: build
+  image: reactnativecommunity/react-native-android:latest
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths: [node_modules/]
+
+  script:
+    - yarn install --frozen-lockfile
+
+    # Inject prod .env
+    - cp .env.production .env
+
+    # Firebase config for tn.attijari.android.prod
+    - mkdir -p firebase
+    - echo "$PROD_GOOGLE_SERVICES_JSON" > firebase/google-services.json
+
+    # Decode prod keystore
+    - echo "$PROD_KEYSTORE_B64" | base64 -d > android/app/attijariup-prod.keystore
+
+    # Inject signing
+    - |
+      cat >> android/gradle.properties << EOF
+      MYAPP_UPLOAD_STORE_FILE=attijariup-prod.keystore
+      MYAPP_UPLOAD_STORE_PASSWORD=$PROD_STORE_PASSWORD
+      MYAPP_UPLOAD_KEY_ALIAS=attijariup-prod
+      MYAPP_UPLOAD_KEY_PASSWORD=$PROD_KEY_PASSWORD
+      EOF
+
+    # Prebuild reads GitLab's app.json → package: tn.attijari.android.prod
+    - npx expo prebuild --platform android --clean
+
+    - cd android && ./gradlew bundleRelease
+
+  artifacts:
+    paths:
+      - android/app/build/outputs/bundle/release/app-release.aab
+    expire_in: 14 days
+  only: [main]
+
+# ─── iOS prod ── com.tn.attijariup ─────────────────────────
+build-ios-prod:
+  stage: build
+  tags: [macos]
+
+  script:
+    - yarn install --frozen-lockfile
+    - cp .env.production .env
+
+    - mkdir -p firebase
+    - echo "$PROD_GOOGLE_PLIST" > firebase/GoogleService-Info.plist
+
+    # Prebuild reads GitLab's app.json → bundleIdentifier: com.tn.attijariup
+    - npx expo prebuild --platform ios --clean
+    - cd ios && pod install && cd ..
+
+    - echo "$IOS_PROD_CERT_B64" | base64 -d > /tmp/cert.p12
+    - security create-keychain -p "ci" /tmp/ci.keychain
+    - security unlock-keychain -p "ci" /tmp/ci.keychain
+    - security import /tmp/cert.p12 -P "$IOS_PROD_CERT_PASSWORD" -A -k /tmp/ci.keychain
+    - security list-keychain -d user -s /tmp/ci.keychain
+
+    - mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+    - echo "$IOS_PROD_PROFILE_B64" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/attijariup-prod.mobileprovision
+
+    - |
+      xcodebuild \
+        -workspace ios/AttijariUpPlus.xcworkspace \
+        -scheme AttijariUpPlus \
+        -configuration Release \
+        -archivePath $CI_PROJECT_DIR/AttijariUpPlus.xcarchive \
+        -destination "generic/platform=iOS" \
+        archive
+    - |
+      xcodebuild -exportArchive \
+        -archivePath $CI_PROJECT_DIR/AttijariUpPlus.xcarchive \
+        -exportOptionsPlist ios/ExportOptions.plist \
+        -exportPath $CI_PROJECT_DIR/ipa
+
+  artifacts:
+    paths: [ipa/]
+    expire_in: 14 days
+  only: [main]
+
+# ─── Play Store ── tn.attijari.android.prod ─────────────────
+release-android-prod:
+  stage: release
+  image: ruby:3.2
+  before_script:
+    - gem install fastlane --no-document
+  script:
+    - fastlane supply
+      --aab android/app/build/outputs/bundle/release/app-release.aab
+      --track internal
+      --json_key_data "$PLAY_STORE_JSON_KEY"
+      --package_name "tn.attijari.android.prod"
+  needs: [build-android-prod]
+  only: [main]
+
+# ─── App Store ── com.tn.attijariup ────────────────────────
+release-ios-prod:
+  stage: release
+  tags: [macos]
+  script:
+    - xcrun altool --upload-app
+      --type ios
+      --file "ipa/AttijariUpPlus.ipa"
+      --apiKey "$APP_STORE_CONNECT_KEY_ID"
+      --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
+      --apiKeyPath <(echo "$APP_STORE_CONNECT_API_KEY_B64" | base64 -d)
+  needs: [build-ios-prod]
+  only: [main]
