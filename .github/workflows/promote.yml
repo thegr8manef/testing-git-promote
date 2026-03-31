@@ -2,7 +2,7 @@ name: Promote to GitLab
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   promote:

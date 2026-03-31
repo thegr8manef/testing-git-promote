@@ -59,7 +59,8 @@ jobs:
       - name: Install JS dependencies
         run: npm ci # ✅ FIXED (was wrong before)
 
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install
+
+      # - name: Install CocoaPods
+      #   run: |
+      #     cd ios
+      #     pod install
