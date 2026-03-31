@@ -1,0 +1,34 @@
+name: Promote to GitLab
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config user.name "thegr8manef"
+          git config user.email "jedidimanef@gmail.com"
+
+      - name: Push to GitLab
+        run: |
+          git remote remove gitlab || true
+          git remote add gitlab https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/jedidimanef-group/testing-gitlab-pormote.git
+
+          # Fetch GitLab repo
+          git fetch gitlab main
+
+          # Merge histories (IMPORTANT)
+          git merge gitlab/main --allow-unrelated-histories -m "ci: sync github -> gitlab"
+
+          # Push
+          git push gitlab main
