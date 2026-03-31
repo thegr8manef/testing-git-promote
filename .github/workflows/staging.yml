@@ -8,8 +8,6 @@ on:
 # INTERNAL TEST (current file)
 #   Android → Firebase App Distribution  (free, instant)
 #   iOS     → TestFlight                 (requires Apple dev account)
-#
-#
 # PRODUCTION PUBLISH (see comments marked [PROD])
 #   Android → Google Play (internal track → promote to production)
 #   iOS     → App Store Connect (TestFlight → submit for review)
