@@ -43,6 +43,12 @@ jobs:
         working-directory: android
         run: ./gradlew assembleRelease
 
+      - name: Upload Release APK
+        uses: actions/upload-artifact@v2
+        with:
+          name: nessnaUp.apk
+          path: app/build/outputs/apk/release/app-release.apk
+
   # ─── iOS staging ───────────────────────────────────
   ios:
     name: iOS staging
