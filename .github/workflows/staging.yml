@@ -9,53 +9,75 @@ jobs:
   android:
     name: Android staging
     runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v4
 
-    steps:
-      - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: npm
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+    - name: Install JS dependencies
+      run: npm ci
 
-      - name: Install JS dependencies
-        run: npm install --frozen-lockfile
+    # ✅ FIX HERE
+    - name: Fix gradlew permission
+      working-directory: android
+      run: chmod +x gradlew
 
-      # - name: Inject .env.development
-      #   run: cp .env.development .env
+    - name: Clean gradle APK
+      working-directory: android
+      run: ./gradlew clean
 
-      # - name: Write firebase/google-services.json (staging)
-      #   run: |
-      #     mkdir -p firebase
-      #     echo '${{ secrets.STAGING_GOOGLE_SERVICES_JSON }}' > firebase/google-services.json
+    - name: Build Release APK
+      working-directory: android
+      run: ./gradlew assembleRelease
+    # steps:
+    #   - uses: actions/checkout@v4
 
-      # - uses: actions/setup-java@v4
-      #   with:
-      #     distribution: temurin
-      #     java-version: 17
+    #   - uses: actions/setup-node@v4
+    #     with:
+    #       node-version: 20
+    #       cache: npm
 
-      # - name: Decode keystore
-      #   run: |
-      #     echo "${{ secrets.STAGING_KEYSTORE_B64 }}" | base64 -d > android/app/AttijariUP-release-key.jks
+    #   - name: Install JS dependencies
+    #     run: npm install --frozen-lockfile
 
-      # - name: Inject signing into gradle.properties
-      #   run: |
-      #     cat >> android/gradle.properties << EOF
-      #     MYAPP_UPLOAD_STORE_FILE=AttijariUP-release-key.jks
-      #     MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.STAGING_STORE_PASSWORD }}
-      #     MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.STAGING_KEY_ALIAS }}
-      #     MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.STAGING_KEY_PASSWORD }}
-      #     EOF
+    # - name: Inject .env.development
+    #   run: cp .env.development .env
 
-      # - name: Expo prebuild (Android)
-      #   run: npx expo prebuild --platform android --clean
-      - name: Clean gradle APK
-        working-directory: android
-        run: ./gradlew clean
+    # - name: Write firebase/google-services.json (staging)
+    #   run: |
+    #     mkdir -p firebase
+    #     echo '${{ secrets.STAGING_GOOGLE_SERVICES_JSON }}' > firebase/google-services.json
 
-      - name: Build Release APK
-        working-directory: android
-        run: ./gradlew assembleRelease
+    # - uses: actions/setup-java@v4
+    #   with:
+    #     distribution: temurin
+    #     java-version: 17
+
+    # - name: Decode keystore
+    #   run: |
+    #     echo "${{ secrets.STAGING_KEYSTORE_B64 }}" | base64 -d > android/app/AttijariUP-release-key.jks
+
+    # - name: Inject signing into gradle.properties
+    #   run: |
+    #     cat >> android/gradle.properties << EOF
+    #     MYAPP_UPLOAD_STORE_FILE=AttijariUP-release-key.jks
+    #     MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.STAGING_STORE_PASSWORD }}
+    #     MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.STAGING_KEY_ALIAS }}
+    #     MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.STAGING_KEY_PASSWORD }}
+    #     EOF
+
+    # - name: Expo prebuild (Android)
+    #   run: npx expo prebuild --platform android --clean
+    # - name: Clean gradle APK
+    #   working-directory: android
+    #   run: ./gradlew clean
+
+    # - name: Build Release APK
+    #   working-directory: android
+    #   run: ./gradlew assembleRelease
 
   # - name: Distribute to Firebase App Distribution
   #   uses: wzieba/Firebase-Distribution-Github-Action@v1
