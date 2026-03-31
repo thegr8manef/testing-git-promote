@@ -33,5 +33,5 @@ jobs:
           # Merge GitLab main into local with auto-resolution (ours strategy)
           git merge gitlab/main --allow-unrelated-histories -s recursive -X ours -m "ci: sync github -> gitlab"
 
-          # Force push to GitLab
-          git push -f gitlab main
+          # Force push master -> main on GitLab
+          git push -f gitlab master:main

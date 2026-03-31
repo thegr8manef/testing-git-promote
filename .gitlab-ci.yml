@@ -94,11 +94,8 @@ release-android-prod:
   before_script:
     - gem install fastlane --no-document
   script:
-    - fastlane supply
-      --aab android/app/build/outputs/bundle/release/app-release.aab
-      --track internal
-      --json_key_data "$PLAY_STORE_JSON_KEY"
-      --package_name "tn.attijari.android.prod"
+    # FIX: all fastlane supply args on one line to avoid YAML multiline misparse
+    - fastlane supply --aab android/app/build/outputs/bundle/release/app-release.aab --track internal --json_key_data "$PLAY_STORE_JSON_KEY" --package_name "tn.attijari.android.prod"
   needs: [build-android-prod]
   only: [main]
 
@@ -107,11 +104,16 @@ release-ios-prod:
   stage: release
   tags: [macos]
   script:
-    - xcrun altool --upload-app
-      --type ios
-      --file "ipa/AttijariUpPlus.ipa"
-      --apiKey "$APP_STORE_CONNECT_KEY_ID"
-      --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID"
-      --apiKeyPath <(echo "$APP_STORE_CONNECT_API_KEY_B64" | base64 -d)
+    # FIX: write API key to a temp file instead of using process substitution <(...)
+    # which is unreliable in non-interactive CI shells
+    - echo "$APP_STORE_CONNECT_API_KEY_B64" | base64 -d > /tmp/app_store_connect_api_key.p8
+    - |
+      xcrun altool --upload-app \
+        --type ios \
+        --file "ipa/AttijariUpPlus.ipa" \
+        --apiKey "$APP_STORE_CONNECT_KEY_ID" \
+        --apiIssuer "$APP_STORE_CONNECT_ISSUER_ID" \
+        --apiKeyPath /tmp/app_store_connect_api_key.p8
+    - rm -f /tmp/app_store_connect_api_key.p8
   needs: [build-ios-prod]
   only: [main]
