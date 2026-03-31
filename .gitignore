@@ -92,3 +92,7 @@ firebase/GoogleService-Info.plist
 # Env files (your .gitignore already has .env — double check these)
 .env.development
 .env.production
+
+#Pipelines
+*.yml
+.github
