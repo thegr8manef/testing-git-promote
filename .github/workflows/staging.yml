@@ -5,90 +5,45 @@ on:
     branches: [master]
 
 jobs:
-  # ─── Android staging ── tn.attijariup.plus ─────────────────
+  # ─── Android staging ───────────────────────────────
   android:
     name: Android staging
     runs-on: ubuntu-latest
-  steps:
-    - uses: actions/checkout@v4
 
-    - uses: actions/setup-node@v4
-      with:
-        node-version: 20
-        cache: npm
+    steps: # ✅ FIXED INDENTATION
+      - uses: actions/checkout@v4
 
-    - name: Install JS dependencies
-      run: npm ci
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
 
-    # ✅ FIX HERE
-    - name: Fix gradlew permission
-      working-directory: android
-      run: chmod +x gradlew
+      - name: Install JS dependencies
+        run: npm ci
 
-    - name: Clean gradle APK
-      working-directory: android
-      run: ./gradlew clean
+      - name: Fix gradlew permission
+        working-directory: android
+        run: chmod +x gradlew
 
-    - name: Build Release APK
-      working-directory: android
-      run: ./gradlew assembleRelease
-    # steps:
-    #   - uses: actions/checkout@v4
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}
 
-    #   - uses: actions/setup-node@v4
-    #     with:
-    #       node-version: 20
-    #       cache: npm
+      - name: Clean gradle APK
+        working-directory: android
+        run: ./gradlew clean
 
-    #   - name: Install JS dependencies
-    #     run: npm install --frozen-lockfile
+      - name: Build Release APK
+        working-directory: android
+        run: ./gradlew assembleRelease
 
-    # - name: Inject .env.development
-    #   run: cp .env.development .env
-
-    # - name: Write firebase/google-services.json (staging)
-    #   run: |
-    #     mkdir -p firebase
-    #     echo '${{ secrets.STAGING_GOOGLE_SERVICES_JSON }}' > firebase/google-services.json
-
-    # - uses: actions/setup-java@v4
-    #   with:
-    #     distribution: temurin
-    #     java-version: 17
-
-    # - name: Decode keystore
-    #   run: |
-    #     echo "${{ secrets.STAGING_KEYSTORE_B64 }}" | base64 -d > android/app/AttijariUP-release-key.jks
-
-    # - name: Inject signing into gradle.properties
-    #   run: |
-    #     cat >> android/gradle.properties << EOF
-    #     MYAPP_UPLOAD_STORE_FILE=AttijariUP-release-key.jks
-    #     MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.STAGING_STORE_PASSWORD }}
-    #     MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.STAGING_KEY_ALIAS }}
-    #     MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.STAGING_KEY_PASSWORD }}
-    #     EOF
-
-    # - name: Expo prebuild (Android)
-    #   run: npx expo prebuild --platform android --clean
-    # - name: Clean gradle APK
-    #   working-directory: android
-    #   run: ./gradlew clean
-
-    # - name: Build Release APK
-    #   working-directory: android
-    #   run: ./gradlew assembleRelease
-
-  # - name: Distribute to Firebase App Distribution
-  #   uses: wzieba/Firebase-Distribution-Github-Action@v1
-  #   with:
-  #     appId: ${{ secrets.FIREBASE_STAGING_ANDROID_APP_ID }}
-  #     serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_CREDENTIALS }}
-  #     file: android/app/build/outputs/apk/previewRelease/app-previewRelease.apk
-  #     groups: qa-team
-  #     releaseNotes: "Android staging (tn.attijariup.plus) · ${{ github.sha }}"
-
-  # ─── iOS staging ── tn.attijariup.plus ─────────────────────
+  # ─── iOS staging ───────────────────────────────────
   ios:
     name: iOS staging
     runs-on: macos-latest
@@ -102,94 +57,9 @@ jobs:
           cache: npm
 
       - name: Install JS dependencies
-        run: npm install --frozen-lockfile
-
-      #     - name: Inject .env.development
-      #       run: cp .env.development .env
-
-      #     - name: Write firebase/GoogleService-Info.plist (staging)
-      #       run: |
-      #         mkdir -p firebase
-      #         echo '${{ secrets.STAGING_GOOGLE_PLIST }}' > firebase/GoogleService-Info.plist
-
-      #     # - name: Expo prebuild (iOS)
-      #     #   run: npx expo prebuild --platform ios --clean
+        run: npm ci # ✅ FIXED (was wrong before)
 
       - name: Install CocoaPods
-        run: cd ios && pod install
-
-  #     - name: Install Apple certificate
-  #       env:
-  #         BUILD_CERTIFICATE_BASE64: ${{ secrets.IOS_STAGING_CERT_B64 }}
-  #         P12_PASSWORD: ${{ secrets.IOS_STAGING_CERT_PASSWORD }}
-  #         KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
-  #       run: |
-  #         CERT_PATH=$RUNNER_TEMP/cert.p12
-  #         KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
-  #         echo -n "$BUILD_CERTIFICATE_BASE64" | base64 -d -o $CERT_PATH
-  #         security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-  #         security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
-  #         security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
-  #         security import $CERT_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
-  #         security list-keychain -d user -s $KEYCHAIN_PATH
-
-  #     - name: Install provisioning profile
-  #       run: |
-  #         mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-  #         echo -n "${{ secrets.IOS_STAGING_PROFILE_B64 }}" | base64 -d \
-  #           > ~/Library/MobileDevice/Provisioning\ Profiles/nessmaup-staging.mobileprovision
-
-  #     - name: Build & archive
-  #       run: |
-  #         xcodebuild \
-  #           -workspace ios/AttijariUpPlus.xcworkspace \
-  #           -scheme AttijariUpPlus \
-  #           -configuration Release \
-  #           -archivePath $RUNNER_TEMP/AttijariUpPlus.xcarchive \
-  #           -destination "generic/platform=iOS" \
-  #           archive
-
-  #     - name: Export IPA
-  #       run: |
-  #         xcodebuild -exportArchive \
-  #           -archivePath $RUNNER_TEMP/AttijariUpPlus.xcarchive \
-  #           -exportOptionsPlist ios/ExportOptions.plist \
-  #           -exportPath $RUNNER_TEMP/ipa
-
-  #     - name: Upload to TestFlight
-  #       run: |
-  #         xcrun altool --upload-app \
-  #           --type ios \
-  #           --file "$RUNNER_TEMP/ipa/AttijariUpPlus.ipa" \
-  #           --apiKey "${{ secrets.APP_STORE_CONNECT_KEY_ID }}" \
-  #           --apiIssuer "${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}" \
-  #           --apiKeyPath <(echo "${{ secrets.APP_STORE_CONNECT_API_KEY_B64 }}" | base64 -d)
-
-  # ─── Promote to GitLab — only if both pass ──────────────────
-  # promote:
-  #   name: Promote to GitLab (prod)
-  #   runs-on: ubuntu-latest
-  #   # needs: [android, ios]
-
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-
-  #     - name: Configure git identity
-  #       run: |
-  #         git config user.email "jedidimanef@gmail.com"
-  #         git config user.name "thegr8manef"
-
-  #     - name: Push source code to GitLab (preserve app.json)
-  #       run: |
-  #         git remote add gitlab http://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/jedidimanef-group/testing-gitlab-pormote.git
-
-  #         # Fetch GitLab main so we can merge (keeps GitLab's app.json)
-  #         git fetch gitlab main
-
-  #         # Merge GitLab into local, keeping GitLab's versions of protected files
-  #         git merge gitlab/main --allow-unrelated-histories --strategy-option=ours -m "ci: sync from staging" || true
-
-  #         # Force push merged result to GitLab
-  #         git push gitlab main --force
+        run: |
+          cd ios
+          pod install
