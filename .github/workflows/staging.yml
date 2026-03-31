@@ -68,7 +68,7 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_APP_ID }}
           token: ${{ secrets.FIREBASE_TOKEN }}
-          groups: internal-testers # tester group name in Firebase console
+          groups: internal-testers-attijari # tester group name in Firebase console
           file: android/app/build/outputs/apk/release/app-release.apk # ← also fix here
           releaseNotes: "Build from commit ${{ github.sha }}"
 
@@ -106,70 +106,70 @@ jobs:
       - name: Install JS dependencies
         run: npm ci
 
-      - name: Install CocoaPods
-        run: |
-          cd ios
-          pod install
+      # - name: Install CocoaPods
+      #   run: |
+      #     cd ios
+      #     pod install
 
-      - name: Import signing certificate
-        env:
-          IOS_CERT_B64: ${{ secrets.IOS_DIST_CERT_B64 }}
-          IOS_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
-        run: |
-          echo "$IOS_CERT_B64" | base64 -d > /tmp/cert.p12
-          security create-keychain -p "ci" /tmp/ci.keychain
-          security unlock-keychain -p "ci" /tmp/ci.keychain
-          security import /tmp/cert.p12 -P "$IOS_CERT_PASSWORD" -A -k /tmp/ci.keychain
-          security list-keychain -d user -s /tmp/ci.keychain
+      # - name: Import signing certificate
+      #   env:
+      #     IOS_CERT_B64: ${{ secrets.IOS_DIST_CERT_B64 }}
+      #     IOS_CERT_PASSWORD: ${{ secrets.IOS_DIST_CERT_PASSWORD }}
+      #   run: |
+      #     echo "$IOS_CERT_B64" | base64 -d > /tmp/cert.p12
+      #     security create-keychain -p "ci" /tmp/ci.keychain
+      #     security unlock-keychain -p "ci" /tmp/ci.keychain
+      #     security import /tmp/cert.p12 -P "$IOS_CERT_PASSWORD" -A -k /tmp/ci.keychain
+      #     security list-keychain -d user -s /tmp/ci.keychain
 
-      - name: Install provisioning profile
-        env:
-          IOS_PROFILE_B64: ${{ secrets.IOS_DIST_PROFILE_B64 }}
-        run: |
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          echo "$IOS_PROFILE_B64" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/app.mobileprovision
+      # - name: Install provisioning profile
+      #   env:
+      #     IOS_PROFILE_B64: ${{ secrets.IOS_DIST_PROFILE_B64 }}
+      #   run: |
+      #     mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+      #     echo "$IOS_PROFILE_B64" | base64 -d > ~/Library/MobileDevice/Provisioning\ Profiles/app.mobileprovision
 
-      - name: Build & archive
-        run: |
-          xcodebuild \
-            -workspace ios/AttijariUpPlus.xcworkspace \
-            -scheme AttijariUpPlus \
-            -configuration Release \
-            -archivePath $RUNNER_TEMP/app.xcarchive \
-            -destination "generic/platform=iOS" \
-            archive
+      # - name: Build & archive
+      #   run: |
+      #     xcodebuild \
+      #       -workspace ios/AttijariUpPlus.xcworkspace \
+      #       -scheme AttijariUpPlus \
+      #       -configuration Release \
+      #       -archivePath $RUNNER_TEMP/app.xcarchive \
+      #       -destination "generic/platform=iOS" \
+      #       archive
 
-      - name: Export IPA
-        run: |
-          xcodebuild -exportArchive \
-            -archivePath $RUNNER_TEMP/app.xcarchive \
-            -exportOptionsPlist ios/ExportOptions.plist \
-            -exportPath $RUNNER_TEMP/ipa
+      # - name: Export IPA
+      #   run: |
+      #     xcodebuild -exportArchive \
+      #       -archivePath $RUNNER_TEMP/app.xcarchive \
+      #       -exportOptionsPlist ios/ExportOptions.plist \
+      #       -exportPath $RUNNER_TEMP/ipa
 
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: nessnaUp.ipa
-          path: ${{ runner.temp }}/ipa/*.ipa
+      # - name: Upload IPA artifact
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: nessnaUp.ipa
+      #     path: ${{ runner.temp }}/ipa/*.ipa
 
-      # ── INTERNAL TEST: distribute via TestFlight ───────────────
-      # Requires secrets: APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
-      #                   APP_STORE_CONNECT_API_KEY_B64
-      # This uploads to TestFlight. Add internal testers in App Store Connect.
-      - name: Upload to TestFlight
-        env:
-          APP_STORE_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-          APP_STORE_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-          APP_STORE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_API_KEY_B64 }}
-        run: |
-          echo "$APP_STORE_KEY_B64" | base64 -d > /tmp/asc_api_key.p8
-          xcrun altool --upload-app \
-            --type ios \
-            --file "$(ls $RUNNER_TEMP/ipa/*.ipa)" \
-            --apiKey "$APP_STORE_KEY_ID" \
-            --apiIssuer "$APP_STORE_ISSUER" \
-            --apiKeyPath /tmp/asc_api_key.p8
-          rm -f /tmp/asc_api_key.p8
+      # # ── INTERNAL TEST: distribute via TestFlight ───────────────
+      # # Requires secrets: APP_STORE_CONNECT_KEY_ID, APP_STORE_CONNECT_ISSUER_ID,
+      # #                   APP_STORE_CONNECT_API_KEY_B64
+      # # This uploads to TestFlight. Add internal testers in App Store Connect.
+      # - name: Upload to TestFlight
+      #   env:
+      #     APP_STORE_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+      #     APP_STORE_ISSUER: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+      #     APP_STORE_KEY_B64: ${{ secrets.APP_STORE_CONNECT_API_KEY_B64 }}
+      #   run: |
+      #     echo "$APP_STORE_KEY_B64" | base64 -d > /tmp/asc_api_key.p8
+      #     xcrun altool --upload-app \
+      #       --type ios \
+      #       --file "$(ls $RUNNER_TEMP/ipa/*.ipa)" \
+      #       --apiKey "$APP_STORE_KEY_ID" \
+      #       --apiIssuer "$APP_STORE_ISSUER" \
+      #       --apiKeyPath /tmp/asc_api_key.p8
+      #     rm -f /tmp/asc_api_key.p8
 
       # ── [PROD] Submit to App Store Review ──────────────────────
       # Uncomment when ready to publish to the App Store.
