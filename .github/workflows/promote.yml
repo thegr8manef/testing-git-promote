@@ -21,14 +21,17 @@ jobs:
 
       - name: Push to GitLab
         run: |
+          # Remove old remote if exists
           git remote remove gitlab || true
+
+          # Add GitLab remote
           git remote add gitlab https://oauth2:${{ secrets.GITLAB_ACCESS_TOKEN }}@gitlab.com/jedidimanef-group/testing-gitlab-pormote.git
 
-          # Fetch GitLab repo
+          # Fetch GitLab main
           git fetch gitlab main
 
-          # Merge histories (IMPORTANT)
-          git merge gitlab/main --allow-unrelated-histories -m "ci: sync github -> gitlab"
+          # Merge GitLab main into local with auto-resolution (ours strategy)
+          git merge gitlab/main --allow-unrelated-histories -s recursive -X ours -m "ci: sync github -> gitlab"
 
-          # Push
-          git push gitlab main
+          # Force push to GitLab
+          git push -f gitlab main
